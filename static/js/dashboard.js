@@ -103,6 +103,67 @@ document.addEventListener("DOMContentLoaded", () => {
   let telemetryTimer = null;
   let eventsTimer = null;
   let demoVideoEl = null;
+  let demoTelemetry = null;
+  let currentDemoSource = "sample_accident";
+  let activeWebcamStream = null;
+  let activeUploadObjectUrl = null;
+
+  function stopLocalWebcamPreview() {
+    if (activeWebcamStream) {
+      activeWebcamStream.getTracks().forEach((t) => t.stop());
+      activeWebcamStream = null;
+    }
+    if (demoVideoEl && demoVideoEl.srcObject) {
+      demoVideoEl.srcObject = null;
+    }
+  }
+
+  function loadDemoVideo(sourceKey) {
+    if (!demoVideoEl) return;
+    stopLocalWebcamPreview();
+    currentDemoSource = sourceKey;
+    const srcMap = {
+      sample_accident: "/sample_data/demo_accident.webm",
+      sample_normal: "/sample_data/demo_normal.webm",
+    };
+    const nextSrc = srcMap[sourceKey] || srcMap.sample_accident;
+    if (!demoVideoEl.src.endsWith(nextSrc)) {
+      demoVideoEl.src = nextSrc;
+    }
+    demoVideoEl.loop = true;
+    demoVideoEl.play().catch(() => {});
+  }
+
+  function syncDemoTelemetry() {
+    if (!staticDemoMode || !demoVideoEl || !demoTelemetry) return;
+    if (currentDemoSource !== "sample_accident" && currentDemoSource !== "sample_normal") return;
+    const frames = demoTelemetry[currentDemoSource];
+    if (!Array.isArray(frames) || frames.length === 0) return;
+
+    const idx = Math.min(frames.length - 1, Math.max(0, Math.floor((demoVideoEl.currentTime || 0) * 24)));
+    const f = frames[idx];
+    applyTelemetryDisplay({
+      fps: demoVideoEl.paused ? 0.0 : 24.0,
+      latency_ms: f.latency_ms,
+      active_vehicles: f.active_vehicles,
+      total_detections: f.total_detections,
+      class_counts: f.class_counts,
+      current_risk_score: f.risk_score,
+      risk_level: f.risk_level,
+      status_text: f.status_text,
+      consecutive_anomaly_frames: f.consecutive_anomaly_frames,
+      temporal_confirm_required: 3,
+      alert: f.is_alert
+        ? {
+            is_alert: true,
+            risk_level: f.risk_level,
+            risk_score: f.risk_score,
+            reason: f.reason,
+          }
+        : null,
+      active_tracks: f.active_tracks,
+    });
+  }
 
   function enableStaticDemoMode() {
     if (staticDemoMode) return;
@@ -110,13 +171,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (telemetryTimer) clearInterval(telemetryTimer);
     if (eventsTimer) clearInterval(eventsTimer);
 
-    headerModelChip.textContent = "YOLOv8n · Cloud Preview";
-    systemStatePill.className = "state-badge state-standby";
-    systemStateText.textContent = "Cloud Preview";
-    deviceNameEl.textContent = "Static CDN (Run app.py locally for live inference)";
-    monitorResMeta.textContent = "Sample Video · Static Mode";
+    headerModelChip.textContent = "YOLOv8n · Cloud Demo";
+    systemStatePill.className = "state-badge state-live";
+    systemStateText.textContent = "Demo Active";
+    monitorLiveDot.classList.add("is-live");
+    deviceNameEl.textContent = "Browser Playback (Pre-Annotated YOLOv8n)";
+    monitorResMeta.textContent = "VP8 WebM · YOLOv8n";
 
-    // Swap MJPEG <img> for HTML5 <video> playing local sample clips
+    // Swap MJPEG <img> for browser-compatible HTML5 <video>
     if (videoStream && videoStream.parentElement) {
       videoStream.hidden = true;
       demoVideoEl = document.createElement("video");
@@ -127,13 +189,29 @@ document.addEventListener("DOMContentLoaded", () => {
       demoVideoEl.loop = true;
       demoVideoEl.muted = true;
       demoVideoEl.playsInline = true;
-      demoVideoEl.src = "/sample_data/accident_scenario.mp4";
+      demoVideoEl.addEventListener("timeupdate", syncDemoTelemetry);
+      demoVideoEl.addEventListener("play", () => {
+        systemStatePill.className = "state-badge state-live";
+        systemStateText.textContent = "Demo Active";
+        monitorLiveDot.classList.add("is-live");
+      });
+      demoVideoEl.addEventListener("pause", () => {
+        systemStatePill.className = "state-badge state-standby";
+        systemStateText.textContent = "Paused";
+        monitorLiveDot.classList.remove("is-live");
+      });
       videoStream.parentElement.appendChild(demoVideoEl);
+      loadDemoVideo("sample_accident");
     }
 
-    showError(
-      "Cloud Preview Mode: Sample videos, incident snapshots, and JSON/CSV exports are active. Run 'python app.py' locally for live YOLOv8n + ByteTrack + webcam inference."
-    );
+    fetch("/sample_data/demo_telemetry.json")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => {
+        demoTelemetry = json;
+        syncDemoTelemetry();
+      })
+      .catch(() => {});
+
     fetchStaticEventsLog();
   }
 
@@ -179,6 +257,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (ctaLaunch) {
     ctaLaunch.addEventListener("click", () => {
       switchView("monitoring");
+      if (staticDemoMode && demoVideoEl) {
+        demoVideoEl.play().catch(() => {});
+      }
     });
   }
 
@@ -318,74 +399,78 @@ document.addEventListener("DOMContentLoaded", () => {
         syncSourceButtons(data.source);
       }
 
-      // Analytics numbers
-      valFps.textContent = (data.fps || 0).toFixed(1);
-      valLatency.textContent = `${(data.latency_ms || 0).toFixed(1)} ms`;
-      valActiveVehicles.textContent = String(data.active_vehicles ?? 0);
-      valTotalVehicles.textContent = String(data.total_detections ?? 0);
+      // Analytics, Risk & Tracks
+      applyTelemetryDisplay(data);
+    } catch (err) {
+      console.error("Telemetry polling error:", err);
+    }
+  }
 
-      // Incident counts
-      const totalIncidents = data.accidents_count ?? 0;
-      navIncidentCount.textContent = String(totalIncidents);
-      valAccidentsCount.textContent = `${totalIncidents} ${totalIncidents === 1 ? "event" : "events"}`;
+  function applyTelemetryDisplay(data) {
+    valFps.textContent = (data.fps || 0).toFixed(1);
+    valLatency.textContent = `${(data.latency_ms || 0).toFixed(1)} ms`;
+    valActiveVehicles.textContent = String(data.active_vehicles ?? 0);
+    valTotalVehicles.textContent = String(data.total_detections ?? 0);
 
-      // Class breakdown chips
-      renderClassBreakdown(data.class_counts || {});
-      if (Array.isArray(data.supported_classes) && data.supported_classes.length > 0) {
-        const clsStr = data.supported_classes.map((c) => c.replace("_", " ")).join(", ");
-        supportedClassesNote.textContent = `Active model classes: ${clsStr}. Custom weights supported for scooter & three-wheeler.`;
+    if (typeof data.accidents_count === "number") {
+      navIncidentCount.textContent = String(data.accidents_count);
+      valAccidentsCount.textContent = `${data.accidents_count} ${data.accidents_count === 1 ? "event" : "events"}`;
+    }
+
+    renderClassBreakdown(data.class_counts || {});
+    if (Array.isArray(data.supported_classes) && data.supported_classes.length > 0) {
+      const clsStr = data.supported_classes.map((c) => c.replace("_", " ")).join(", ");
+      supportedClassesNote.textContent = `Active model classes: ${clsStr}. Custom weights supported for scooter & three-wheeler.`;
+    }
+
+    const risk = data.current_risk_score || 0;
+    const tier = data.risk_level || "NORMAL_TRAFFIC";
+    valRiskScore.textContent = `${risk.toFixed(1)}%`;
+    riskGaugeBar.style.width = `${Math.min(100, Math.max(0, risk))}%`;
+    valRiskSubtext.textContent = data.status_text || "Normal Traffic Flow";
+
+    const consec = data.consecutive_anomaly_frames || 0;
+    const reqFrames = data.temporal_confirm_required || 3;
+    valTemporalStatus.textContent = `${consec} / ${reqFrames} frames`;
+
+    valRiskBadge.textContent = tier;
+    valRiskBadge.className = "tier-badge";
+    riskGaugeBar.className = "progress-fill";
+
+    if (tier === "CONFIRMED_ACCIDENT") {
+      valRiskBadge.classList.add("tier-confirmed");
+      riskGaugeBar.classList.add("is-red");
+    } else if (tier === "SUSPECTED_ACCIDENT") {
+      valRiskBadge.classList.add("tier-suspected");
+      riskGaugeBar.classList.add("is-red");
+    } else if (tier === "COLLISION_RISK") {
+      valRiskBadge.classList.add("tier-risk");
+      riskGaugeBar.classList.add("is-amber");
+    } else {
+      valRiskBadge.classList.add("tier-normal");
+    }
+
+    if (data.alert && data.alert.is_alert) {
+      const alt = data.alert;
+      const isCritical = alt.risk_level === "CONFIRMED_ACCIDENT" || alt.risk_level === "SUSPECTED_ACCIDENT";
+      accidentBanner.className = `status-banner ${isCritical ? "is-critical" : "is-warning"}`;
+      bannerTag.textContent = alt.risk_level;
+      bannerTitle.textContent =
+        alt.risk_level === "CONFIRMED_ACCIDENT"
+          ? "Confirmed Accident Detected (Multi-Frame Validated)"
+          : alt.risk_level === "SUSPECTED_ACCIDENT"
+          ? "Suspected Accident — Validating Temporal Persistence"
+          : "Potential Collision Risk";
+      bannerReason.textContent = alt.reason || "Collision kinematics anomaly";
+      bannerRisk.textContent = `${alt.risk_score}%`;
+      if (isCritical) {
+        playAlertBeep(alt.risk_level === "CONFIRMED_ACCIDENT");
       }
+    } else {
+      accidentBanner.className = "status-banner is-hidden";
+    }
 
-      // 4-Tier Accident Monitoring
-      const risk = data.current_risk_score || 0;
-      const tier = data.risk_level || "NORMAL_TRAFFIC";
-      valRiskScore.textContent = `${risk.toFixed(1)}%`;
-      riskGaugeBar.style.width = `${Math.min(100, Math.max(0, risk))}%`;
-      valRiskSubtext.textContent = data.status_text || "Normal Traffic Flow";
-
-      const consec = data.consecutive_anomaly_frames || 0;
-      const reqFrames = data.temporal_confirm_required || 3;
-      valTemporalStatus.textContent = `${consec} / ${reqFrames} frames`;
-
-      valRiskBadge.textContent = tier;
-      valRiskBadge.className = "tier-badge";
-      riskGaugeBar.className = "progress-fill";
-
-      if (tier === "CONFIRMED_ACCIDENT") {
-        valRiskBadge.classList.add("tier-confirmed");
-        riskGaugeBar.classList.add("is-red");
-      } else if (tier === "SUSPECTED_ACCIDENT") {
-        valRiskBadge.classList.add("tier-suspected");
-        riskGaugeBar.classList.add("is-red");
-      } else if (tier === "COLLISION_RISK") {
-        valRiskBadge.classList.add("tier-risk");
-        riskGaugeBar.classList.add("is-amber");
-      } else {
-        valRiskBadge.classList.add("tier-normal");
-      }
-
-      // Alert Banner
-      if (data.alert && data.alert.is_alert) {
-        const alt = data.alert;
-        const isCritical = alt.risk_level === "CONFIRMED_ACCIDENT" || alt.risk_level === "SUSPECTED_ACCIDENT";
-        accidentBanner.className = `status-banner ${isCritical ? "is-critical" : "is-warning"}`;
-        bannerTag.textContent = alt.risk_level;
-        bannerTitle.textContent =
-          alt.risk_level === "CONFIRMED_ACCIDENT"
-            ? "Confirmed Accident Detected (Multi-Frame Validated)"
-            : alt.risk_level === "SUSPECTED_ACCIDENT"
-            ? "Suspected Accident — Validating Temporal Persistence"
-            : "Potential Collision Risk";
-        bannerReason.textContent = alt.reason || "Collision kinematics anomaly";
-        bannerRisk.textContent = `${alt.risk_score}%`;
-        if (isCritical) {
-          playAlertBeep(alt.risk_level === "CONFIRMED_ACCIDENT");
-        }
-      } else {
-        accidentBanner.className = "status-banner is-hidden";
-      }
-
-      // Latest Incident Summary
+    if ("latest_incident" in data) {
       latestIncidentCache = data.latest_incident || null;
       if (latestIncidentCache) {
         latestIncidentTime.textContent = latestIncidentCache.timestamp || "";
@@ -396,12 +481,9 @@ document.addEventListener("DOMContentLoaded", () => {
         latestIncidentSummary.textContent = "No collision incidents recorded.";
         btnViewLatestIncident.hidden = true;
       }
-
-      // Active Tracks Table
-      renderActiveTracks(data.active_tracks || []);
-    } catch (err) {
-      console.error("Telemetry polling error:", err);
     }
+
+    renderActiveTracks(data.active_tracks || []);
   }
 
   function renderClassBreakdown(counts) {
@@ -592,6 +674,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   btnStart.addEventListener("click", async () => {
     clearError();
+    if (staticDemoMode) {
+      if (demoVideoEl) {
+        if (currentDemoSource === "webcam" && !activeWebcamStream) {
+          await switchSource("webcam", srcWebcam, "Source: Live Webcam");
+        } else {
+          demoVideoEl.play().catch((err) => showError(`Unable to play video: ${err.message}`));
+        }
+      }
+      return;
+    }
     try {
       await postJson("/api/start_detection");
     } catch (err) {
@@ -601,6 +693,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   btnStop.addEventListener("click", async () => {
     clearError();
+    if (staticDemoMode) {
+      if (demoVideoEl) demoVideoEl.pause();
+      stopLocalWebcamPreview();
+      return;
+    }
     try {
       await postJson("/api/stop_detection");
     } catch (err) {
@@ -610,6 +707,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   btnSnapshot.addEventListener("click", async () => {
     clearError();
+    if (staticDemoMode && demoVideoEl && demoVideoEl.videoWidth > 0) {
+      const canvas = document.createElement("canvas");
+      canvas.width = demoVideoEl.videoWidth;
+      canvas.height = demoVideoEl.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(demoVideoEl, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+      openSnapshotDialog(dataUrl, "Captured Video Frame", `Captured from ${activeSourceTitle.textContent}`);
+      return;
+    }
     try {
       btnSnapshot.disabled = true;
       const data = await postJson("/api/capture_snapshot");
@@ -626,12 +733,27 @@ document.addEventListener("DOMContentLoaded", () => {
     syncSourceButtons(source);
     activeSourceTitle.textContent = titleText;
     if (staticDemoMode) {
-      if (source === "sample_normal" && demoVideoEl) {
-        demoVideoEl.src = "/sample_data/normal_traffic.mp4";
-      } else if (source === "sample_accident" && demoVideoEl) {
-        demoVideoEl.src = "/sample_data/accident_scenario.mp4";
+      if (source === "sample_normal" || source === "sample_accident") {
+        loadDemoVideo(source);
+      } else if (source === "webcam") {
+        stopLocalWebcamPreview();
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          showError("Camera access is not supported in this browser or requires HTTPS.");
+          return;
+        }
+        try {
+          activeWebcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+          currentDemoSource = "webcam";
+          demoVideoEl.removeAttribute("src");
+          demoVideoEl.srcObject = activeWebcamStream;
+          demoVideoEl.loop = false;
+          await demoVideoEl.play();
+          showError("Browser webcam preview active. For live YOLOv8n + ByteTrack neural detection on webcam, run 'python app.py' locally.");
+        } catch (err) {
+          showError(`Camera access unavailable: ${err.message}`);
+        }
       } else {
-        showError("Live webcam and video uploads require running the local Flask server ('python app.py').");
+        showError("Video upload inference requires running 'python app.py' locally.");
       }
       return;
     }
@@ -657,6 +779,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     clearError();
     syncSourceButtons("upload");
+
+    if (staticDemoMode && demoVideoEl) {
+      stopLocalWebcamPreview();
+      if (activeUploadObjectUrl) URL.revokeObjectURL(activeUploadObjectUrl);
+      activeUploadObjectUrl = URL.createObjectURL(file);
+      currentDemoSource = "upload";
+      demoVideoEl.src = activeUploadObjectUrl;
+      demoVideoEl.loop = true;
+      demoVideoEl.play().catch(() => {});
+      activeSourceTitle.textContent = `Source: ${file.name} (Preview)`;
+      showError("Playing uploaded video locally in browser preview. Run 'python app.py' locally for live YOLOv8n accident detection on uploaded videos.");
+      return;
+    }
+
     activeSourceTitle.textContent = `Uploading: ${file.name}...`;
 
     const formData = new FormData();
