@@ -103,6 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let telemetryTimer = null;
   let eventsTimer = null;
   let demoVideoEl = null;
+  let overlayCanvasEl = null;
   let demoTelemetry = null;
   let currentDemoSource = "sample_accident";
   let activeWebcamStream = null;
@@ -120,8 +121,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function loadDemoVideo(sourceKey) {
     if (!demoVideoEl) return;
+    if (window.AuraBrowserAI) {
+      window.AuraBrowserAI.stop();
+      window.AuraBrowserAI.resetState();
+    }
     stopLocalWebcamPreview();
     currentDemoSource = sourceKey;
+    demoVideoEl.controls = true;
     const srcMap = {
       sample_accident: "/sample_data/demo_accident.webm",
       sample_normal: "/sample_data/demo_normal.webm",
@@ -132,6 +138,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     demoVideoEl.loop = true;
     demoVideoEl.play().catch(() => {});
+    headerModelChip.textContent = "YOLOv8n · Cloud Demo";
+    deviceNameEl.textContent = "Browser Playback (Pre-Annotated YOLOv8n)";
+    monitorResMeta.textContent = "VP8 WebM · YOLOv8n";
   }
 
   function syncDemoTelemetry() {
@@ -201,6 +210,31 @@ document.addEventListener("DOMContentLoaded", () => {
         monitorLiveDot.classList.remove("is-live");
       });
       videoStream.parentElement.appendChild(demoVideoEl);
+
+      overlayCanvasEl = document.createElement("canvas");
+      overlayCanvasEl.id = "ai-overlay-canvas";
+      overlayCanvasEl.className = "ai-overlay-canvas";
+      videoStream.parentElement.appendChild(overlayCanvasEl);
+
+      if (window.AuraBrowserAI) {
+        window.AuraBrowserAI.attach(demoVideoEl, overlayCanvasEl, {
+          onTelemetry: (t) => applyTelemetryDisplay(t),
+          onStatus: (msg) => (msg ? showError(msg) : clearError()),
+          onIncident: (inc) => {
+            const nextId = cachedEvents.reduce((m, e) => Math.max(m, Number(e.event_id) || 0), 0) + 1;
+            const entry = { event_id: nextId, ...inc };
+            cachedEvents.unshift(entry);
+            latestIncidentCache = entry;
+            navIncidentCount.textContent = String(cachedEvents.length);
+            valAccidentsCount.textContent = `${cachedEvents.length} ${cachedEvents.length === 1 ? "event" : "events"}`;
+            latestIncidentTime.textContent = entry.timestamp;
+            latestIncidentSummary.textContent = `#${String(entry.event_id).padStart(4, "0")} · ${entry.status} (${entry.risk_score}%) — ${entry.reason}`;
+            btnViewLatestIncident.hidden = false;
+            renderEventsLog(cachedEvents);
+          },
+        });
+      }
+
       loadDemoVideo("sample_accident");
     }
 
@@ -679,7 +713,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentDemoSource === "webcam" && !activeWebcamStream) {
           await switchSource("webcam", srcWebcam, "Source: Live Webcam");
         } else {
-          demoVideoEl.play().catch((err) => showError(`Unable to play video: ${err.message}`));
+          await demoVideoEl.play().catch((err) => showError(`Unable to play video: ${err.message}`));
+          if ((currentDemoSource === "webcam" || currentDemoSource === "upload") && window.AuraBrowserAI) {
+            window.AuraBrowserAI.start().catch((err) => showError(err.message));
+          }
         }
       }
       return;
@@ -694,6 +731,7 @@ document.addEventListener("DOMContentLoaded", () => {
   btnStop.addEventListener("click", async () => {
     clearError();
     if (staticDemoMode) {
+      if (window.AuraBrowserAI) window.AuraBrowserAI.stop();
       if (demoVideoEl) demoVideoEl.pause();
       stopLocalWebcamPreview();
       return;
@@ -713,6 +751,9 @@ document.addEventListener("DOMContentLoaded", () => {
       canvas.height = demoVideoEl.videoHeight;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(demoVideoEl, 0, 0, canvas.width, canvas.height);
+      if (overlayCanvasEl && overlayCanvasEl.width > 0) {
+        ctx.drawImage(overlayCanvasEl, 0, 0, canvas.width, canvas.height);
+      }
       const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
       openSnapshotDialog(dataUrl, "Captured Video Frame", `Captured from ${activeSourceTitle.textContent}`);
       return;
@@ -736,6 +777,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (source === "sample_normal" || source === "sample_accident") {
         loadDemoVideo(source);
       } else if (source === "webcam") {
+        if (window.AuraBrowserAI) {
+          window.AuraBrowserAI.stop();
+          window.AuraBrowserAI.resetState();
+        }
         stopLocalWebcamPreview();
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
           showError("Camera access is not supported in this browser or requires HTTPS.");
@@ -744,16 +789,22 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
           activeWebcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
           currentDemoSource = "webcam";
+          demoVideoEl.controls = false;
           demoVideoEl.removeAttribute("src");
           demoVideoEl.srcObject = activeWebcamStream;
           demoVideoEl.loop = false;
           await demoVideoEl.play();
-          showError("Browser webcam preview active. For live YOLOv8n + ByteTrack neural detection on webcam, run 'python app.py' locally.");
+          headerModelChip.textContent = "COCO-SSD · Browser AI";
+          deviceNameEl.textContent = "Browser WebGL/CPU Inference";
+          monitorResMeta.textContent = "Live Webcam · AI Detection";
+          if (window.AuraBrowserAI) {
+            await window.AuraBrowserAI.start();
+          }
         } catch (err) {
           showError(`Camera access unavailable: ${err.message}`);
         }
       } else {
-        showError("Video upload inference requires running 'python app.py' locally.");
+        showError("Select a video file to run browser AI accident detection.");
       }
       return;
     }
@@ -781,15 +832,25 @@ document.addEventListener("DOMContentLoaded", () => {
     syncSourceButtons("upload");
 
     if (staticDemoMode && demoVideoEl) {
+      if (window.AuraBrowserAI) {
+        window.AuraBrowserAI.stop();
+        window.AuraBrowserAI.resetState();
+      }
       stopLocalWebcamPreview();
       if (activeUploadObjectUrl) URL.revokeObjectURL(activeUploadObjectUrl);
       activeUploadObjectUrl = URL.createObjectURL(file);
       currentDemoSource = "upload";
+      demoVideoEl.controls = true;
       demoVideoEl.src = activeUploadObjectUrl;
       demoVideoEl.loop = true;
-      demoVideoEl.play().catch(() => {});
-      activeSourceTitle.textContent = `Source: ${file.name} (Preview)`;
-      showError("Playing uploaded video locally in browser preview. Run 'python app.py' locally for live YOLOv8n accident detection on uploaded videos.");
+      await demoVideoEl.play().catch(() => {});
+      activeSourceTitle.textContent = `Source: ${file.name}`;
+      headerModelChip.textContent = "COCO-SSD · Browser AI";
+      deviceNameEl.textContent = "Browser WebGL/CPU Inference";
+      monitorResMeta.textContent = "Recorded Video · AI Detection";
+      if (window.AuraBrowserAI) {
+        window.AuraBrowserAI.start().catch((err) => showError(`AI initialization failed: ${err.message}`));
+      }
       return;
     }
 
@@ -840,8 +901,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   confSlider.addEventListener("change", async (e) => {
     clearError();
+    const val = parseFloat(e.target.value);
+    if (staticDemoMode) {
+      if (window.AuraBrowserAI) window.AuraBrowserAI.setConfidence(val);
+      return;
+    }
     try {
-      await postJson("/api/set_inference_params", { conf: parseFloat(e.target.value) });
+      await postJson("/api/set_inference_params", { conf: val });
     } catch (err) {
       showError(err.message);
     }
@@ -853,8 +919,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   sensitivitySlider.addEventListener("change", async (e) => {
     clearError();
+    const val = parseFloat(e.target.value);
+    if (staticDemoMode) {
+      if (window.AuraBrowserAI) window.AuraBrowserAI.setRiskThreshold(val);
+      return;
+    }
     try {
-      await postJson("/api/set_threshold", { threshold: parseFloat(e.target.value) });
+      await postJson("/api/set_threshold", { threshold: val });
     } catch (err) {
       showError(err.message);
     }

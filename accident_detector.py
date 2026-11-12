@@ -342,7 +342,7 @@ class AccidentDetector:
         is_parallel_traffic = (min_heading_diff < 25.0) and (abs(v1.smoothed_speed - v2.smoothed_speed) < 2.0)
         
         # If moving in parallel traffic without sudden deceleration, reject as normal flow
-        if is_parallel_traffic and v1.smoothed_deceleration < 4.0 and v2.smoothed_deceleration < 4.0:
+        if is_parallel_traffic and v1.smoothed_deceleration < 3.0 and v2.smoothed_deceleration < 3.0:
             return 0.0, [], []
 
         score_iou = 0.0
@@ -373,7 +373,7 @@ class AccidentDetector:
         max_smoothed_decel = max(v1.smoothed_deceleration, v2.smoothed_deceleration)
         has_contact_or_near = (iou > 0.04 or (center_dist < config.PROXIMITY_DISTANCE_PX and closing_speed > 3.0) or is_ped_involved)
         
-        if has_contact_or_near and max_smoothed_decel > 4.0:
+        if has_contact_or_near and max_smoothed_decel > 2.5:
             score_decel = min(100.0, (max_smoothed_decel / config.SUDDEN_DECEL_THRESHOLD_PX) * 100.0)
             reasons.append(f"Sudden Impact Deceleration ({max_smoothed_decel:.1f} px/f)")
         else:
@@ -390,8 +390,8 @@ class AccidentDetector:
             score_angle = 0.0
 
         # D. Post-Impact Sudden Stoppage
-        prior_speed_high = (v1.max_recent_speed > 5.5 and v1.is_stopped) or (v2.max_recent_speed > 5.5 and v2.is_stopped)
-        if prior_speed_high and (iou > 0.06 or score_decel > 25.0 or is_ped_involved):
+        prior_speed_high = (v1.max_recent_speed > 3.8 and v1.is_stopped) or (v2.max_recent_speed > 3.8 and v2.is_stopped)
+        if prior_speed_high and (iou > 0.06 or score_decel > 18.0 or is_ped_involved):
             score_stop = 90.0
             reasons.append("Post-Impact Stoppage")
         else:
