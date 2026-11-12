@@ -1,0 +1,14 @@
+path: C:\Users\vivek\accident\datasets\accident_traffic
+train: images/train
+val: images/val
+names:
+  0: person
+  1: bicycle
+  2: car
+  3: motorcycle
+  4: scooter
+  5: bus
+  6: truck
+  7: auto_rickshaw
+  8: accident_contact
+nc: 9

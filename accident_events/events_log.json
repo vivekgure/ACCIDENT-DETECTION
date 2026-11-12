@@ -1,0 +1,263 @@
+[
+  {
+    "event_id": 13,
+    "timestamp": "2026-10-21 03:05:57",
+    "risk_score": 83.5,
+    "reason": "Physical Collision Contact (IoU: 0.68), Sudden Impact Deceleration (14.0 px/f), Post-Impact Stoppage",
+    "vehicle_count": 2,
+    "vehicles_involved": [
+      {
+        "id": 1,
+        "class": "car",
+        "speed": 0.5
+      },
+      {
+        "id": 2,
+        "class": "truck",
+        "speed": 0.8
+      }
+    ],
+    "snapshot_url": "/accident_events/event_0013_20261021_030557.jpg",
+    "status": "CONFIRMED_ACCIDENT",
+    "temporal_confirmations": 3
+  },
+  {
+    "event_id": 12,
+    "timestamp": "2026-10-21 02:24:42",
+    "risk_score": 82.0,
+    "reason": "Solo Wall/Barrier Crash (109.7 -> 0 px/f)",
+    "vehicle_count": 2,
+    "vehicles_involved": [
+      {
+        "id": 1,
+        "class": "car",
+        "speed": 0.8
+      },
+      {
+        "id": 2,
+        "class": "car",
+        "speed": 0.0
+      }
+    ],
+    "snapshot_url": "/accident_events/event_0012_20261021_022442.jpg",
+    "status": "CONFIRMED_ACCIDENT",
+    "temporal_confirmations": 31
+  },
+  {
+    "event_id": 11,
+    "timestamp": "2026-10-21 02:21:56",
+    "risk_score": 83.5,
+    "reason": "Physical Collision Contact (IoU: 0.68), Sudden Impact Deceleration (14.0 px/f), Post-Impact Stoppage",
+    "vehicle_count": 2,
+    "vehicles_involved": [
+      {
+        "id": 1,
+        "class": "car",
+        "speed": 0.5
+      },
+      {
+        "id": 2,
+        "class": "truck",
+        "speed": 0.8
+      }
+    ],
+    "snapshot_url": "/accident_events/event_0011_20261021_022156.jpg",
+    "status": "CONFIRMED_ACCIDENT",
+    "temporal_confirmations": 3
+  },
+  {
+    "event_id": 10,
+    "timestamp": "2026-09-23 11:00:59",
+    "risk_score": 91.9,
+    "reason": "Violent Vehicle Spin / Loss of Control (179\u00b0)",
+    "vehicle_count": 1,
+    "vehicles_involved": [
+      {
+        "id": 13,
+        "class": "car",
+        "speed": 15.1
+      }
+    ],
+    "snapshot_url": "/accident_events/event_0010_20260923_110059.jpg",
+    "status": "Possible Accident",
+    "temporal_confirmations": 1
+  },
+  {
+    "event_id": 9,
+    "timestamp": "2026-09-23 10:58:10",
+    "risk_score": 91.6,
+    "reason": "Violent Vehicle Spin / Loss of Control (176\u00b0)",
+    "vehicle_count": 2,
+    "vehicles_involved": [
+      {
+        "id": 1,
+        "class": "truck",
+        "speed": 67.3
+      },
+      {
+        "id": 2,
+        "class": "car",
+        "speed": 4.6
+      }
+    ],
+    "snapshot_url": "/accident_events/event_0009_20260923_105810.jpg",
+    "status": "Possible Accident",
+    "temporal_confirmations": 1
+  },
+  {
+    "event_id": 8,
+    "timestamp": "2026-09-23 09:06:59",
+    "risk_score": 91.6,
+    "reason": "Violent Vehicle Spin / Loss of Control (176\u00b0)",
+    "vehicle_count": 2,
+    "vehicles_involved": [
+      {
+        "id": 1,
+        "class": "truck",
+        "speed": 67.3
+      },
+      {
+        "id": 2,
+        "class": "car",
+        "speed": 4.6
+      }
+    ],
+    "snapshot_url": "/accident_events/event_0008_20260923_090659.jpg",
+    "status": "Possible Accident",
+    "temporal_confirmations": 1
+  },
+  {
+    "event_id": 7,
+    "timestamp": "2026-09-22 23:10:49",
+    "risk_score": 91.9,
+    "reason": "Violent Vehicle Spin / Loss of Control (179\u00b0)",
+    "vehicle_count": 1,
+    "vehicles_involved": [
+      {
+        "id": 13,
+        "class": "car",
+        "speed": 15.1
+      }
+    ],
+    "snapshot_url": "/accident_events/event_0007_20260922_231049.jpg",
+    "status": "Possible Accident",
+    "temporal_confirmations": 1
+  },
+  {
+    "event_id": 6,
+    "timestamp": "2026-09-22 23:09:30",
+    "risk_score": 91.6,
+    "reason": "Violent Vehicle Spin / Loss of Control (176\u00b0)",
+    "vehicle_count": 2,
+    "vehicles_involved": [
+      {
+        "id": 1,
+        "class": "truck",
+        "speed": 67.3
+      },
+      {
+        "id": 2,
+        "class": "car",
+        "speed": 4.6
+      }
+    ],
+    "snapshot_url": "/accident_events/event_0006_20260922_230930.jpg",
+    "status": "Possible Accident",
+    "temporal_confirmations": 1
+  },
+  {
+    "event_id": 5,
+    "timestamp": "2026-09-22 23:01:20",
+    "risk_score": 91.9,
+    "reason": "Violent Vehicle Spin / Loss of Control (179\u00b0)",
+    "vehicle_count": 1,
+    "vehicles_involved": [
+      {
+        "id": 6,
+        "class": "truck",
+        "speed": 11.4
+      }
+    ],
+    "snapshot_url": "/accident_events/event_0005_20260922_230120.jpg",
+    "status": "Possible Accident",
+    "temporal_confirmations": 1
+  },
+  {
+    "event_id": 4,
+    "timestamp": "2026-09-22 23:01:05",
+    "risk_score": 82.0,
+    "reason": "Physical Collision Contact (IoU: 0.42), Sudden Impact Deceleration (23.7 px/f)",
+    "vehicle_count": 2,
+    "vehicles_involved": [
+      {
+        "id": 1,
+        "class": "truck",
+        "speed": 67.3
+      },
+      {
+        "id": 2,
+        "class": "car",
+        "speed": 4.6
+      }
+    ],
+    "snapshot_url": "/accident_events/event_0004_20260922_230105.jpg",
+    "status": "Possible Accident",
+    "temporal_confirmations": 1
+  },
+  {
+    "event_id": 3,
+    "timestamp": "2026-09-22 22:59:43",
+    "risk_score": 82.0,
+    "reason": "Physical Collision Contact (IoU: 0.42), Sudden Impact Deceleration (23.7 px/f)",
+    "vehicle_count": 2,
+    "vehicles_involved": [
+      {
+        "id": 1,
+        "class": "truck",
+        "speed": 67.3
+      },
+      {
+        "id": 2,
+        "class": "car",
+        "speed": 4.6
+      }
+    ],
+    "snapshot_url": "/accident_events/event_0003_20260922_225943.jpg",
+    "status": "Possible Accident",
+    "temporal_confirmations": 1
+  },
+  {
+    "event_id": 2,
+    "timestamp": "2026-09-22 22:58:49",
+    "risk_score": 91.9,
+    "reason": "Violent Vehicle Spin / Loss of Control (179\u00b0)",
+    "vehicle_count": 1,
+    "vehicles_involved": [
+      {
+        "id": 6,
+        "class": "truck",
+        "speed": 11.4
+      }
+    ],
+    "snapshot_url": "/accident_events/event_0002_20260922_225849.jpg",
+    "status": "Possible Accident",
+    "temporal_confirmations": 1
+  },
+  {
+    "event_id": 1,
+    "timestamp": "2026-09-22 22:57:59",
+    "risk_score": 91.9,
+    "reason": "Violent Vehicle Spin / Loss of Control (179\u00b0)",
+    "vehicle_count": 1,
+    "vehicles_involved": [
+      {
+        "id": 6,
+        "class": "truck",
+        "speed": 11.4
+      }
+    ],
+    "snapshot_url": "/accident_events/event_0001_20260922_225759.jpg",
+    "status": "Possible Accident",
+    "temporal_confirmations": 1
+  }
+]

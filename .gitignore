@@ -1,0 +1,20 @@
+# Python & Virtual Environment
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Oversized model weights (>100 MB GitHub limit) & temporary outputs
+models/yolo26x.pt
+uploads/
+output_results/
+backup_pre_yolo26x/
+
+# Vercel build output
+public_dist/
+.vercel/
+
+# OS & Logs
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,15 @@
+# AURA-VISION AI Vehicle Accident Detection Dependencies
+ultralytics>=8.3.0
+torch>=2.2.0
+torchvision>=0.17.0
+opencv-python>=4.9.0.80
+numpy>=1.26.0
+flask>=3.0.0
+pillow>=10.2.0
+scipy>=1.12.0
+werkzeug>=3.0.0
+requests>=2.31.0
+lap>=0.5.12
+nvidia-ml-py>=12.535.0
+pyyaml>=6.0.0
+psutil>=5.9.0

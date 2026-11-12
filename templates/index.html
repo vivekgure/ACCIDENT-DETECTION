@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AURA-VISION — Intelligent road safety platform combining computer vision, ByteTrack vehicle tracking, and multi-frame accident analysis.">
+  <title>AURA-VISION | Road Safety &amp; Accident Detection</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link visually-hidden">Skip to main content</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 28 28" width="24" height="24" aria-hidden="true">
+          <rect x="2" y="2" width="24" height="24" rx="5" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M8 20L14 8L20 20" fill="none" stroke="#B7D83B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="14" cy="17" r="2" fill="#B7D83B"/>
+        </svg>
+        <span class="brand-name">AURA-VISION</span>
+      </div>
+
+      <nav class="main-nav" aria-label="Primary navigation">
+        <button type="button" class="nav-tab is-active" data-view="overview" id="nav-overview">Overview</button>
+        <button type="button" class="nav-tab" data-view="monitoring" id="nav-monitoring">Live Monitoring</button>
+        <button type="button" class="nav-tab" data-view="incidents" id="nav-incidents">
+          Incidents <span class="nav-count" id="nav-incident-count">0</span>
+        </button>
+      </nav>
+
+      <div class="header-status">
+        <span class="meta-chip" id="header-model-chip">YOLOv8n · CPU</span>
+        <span class="state-badge state-standby" id="system-state-pill">
+          <span class="state-dot" aria-hidden="true"></span>
+          <span id="system-state-text">Standby</span>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    <!-- ================================================================
+         VIEW 1: MINIMAL LANDING / OVERVIEW
+         ================================================================ -->
+    <section id="view-overview" class="view-section is-active" aria-labelledby="hero-heading">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Intelligent Road Safety Platform</p>
+          <h1 id="hero-heading" class="hero-title">Smarter Roads. Safer Journeys.</h1>
+          <p class="hero-desc">
+            An intelligent road safety platform combining computer vision, vehicle tracking and multi-frame accident analysis to identify potential road incidents.
+          </p>
+          <div class="hero-actions">
+            <button type="button" class="btn btn-primary" id="cta-launch">
+              Launch Detection
+              <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+                <path d="M4 10h12m0 0l-4-4m4 4l-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button type="button" class="btn btn-secondary" id="cta-explore">Explore Technology</button>
+          </div>
+        </div>
+
+        <!-- Minimal AI Road Monitoring Schematic -->
+        <div class="hero-visual" aria-label="Schematic representation of AI road monitoring">
+          <svg viewBox="0 0 560 360" class="schematic-svg" role="img" aria-label="AI road monitoring schematic showing tracked vehicles and risk telemetry">
+            <rect x="0" y="0" width="560" height="360" rx="8" fill="#191D1C"/>
+            <!-- Road surface & lane geometry -->
+            <path d="M90 360 L215 80 L345 80 L470 360 Z" fill="#202524"/>
+            <line x1="215" y1="80" x2="90" y2="360" stroke="#3B4240" stroke-width="1.5"/>
+            <line x1="345" y1="80" x2="470" y2="360" stroke="#3B4240" stroke-width="1.5"/>
+            <line x1="280" y1="90" x2="280" y2="350" stroke="#3B4240" stroke-width="1.5" stroke-dasharray="10 10"/>
+
+            <!-- Subtle trajectories -->
+            <path d="M185 330 Q205 275 220 230" fill="none" stroke="#B7D83B" stroke-width="1.5" stroke-opacity="0.55"/>
+            <path d="M350 295 Q335 245 322 195" fill="none" stroke="#B7D83B" stroke-width="1.5" stroke-opacity="0.55"/>
+
+            <!-- Tracked Vehicle 1 (Car) -->
+            <g>
+              <rect x="172" y="190" width="96" height="62" rx="2" fill="none" stroke="#B7D83B" stroke-width="1.5"/>
+              <rect x="172" y="170" width="82" height="18" rx="2" fill="#191D1C" stroke="#B7D83B" stroke-width="1"/>
+              <text x="178" y="182" fill="#B7D83B" font-family="ui-monospace, monospace" font-size="10">#01 CAR 94%</text>
+              <circle cx="220" cy="221" r="2.5" fill="#B7D83B"/>
+            </g>
+
+            <!-- Tracked Vehicle 2 (Motorcycle) -->
+            <g>
+              <rect x="304" y="148" width="46" height="54" rx="2" fill="none" stroke="#B7D83B" stroke-width="1.5"/>
+              <rect x="304" y="128" width="96" height="18" rx="2" fill="#191D1C" stroke="#B7D83B" stroke-width="1"/>
+              <text x="310" y="140" fill="#B7D83B" font-family="ui-monospace, monospace" font-size="10">#02 MOTO 89%</text>
+              <circle cx="327" cy="175" r="2.5" fill="#B7D83B"/>
+            </g>
+
+            <!-- Top minimal telemetry bar -->
+            <rect x="16" y="16" width="528" height="32" rx="4" fill="#252A29" stroke="#323837" stroke-width="1"/>
+            <circle cx="34" cy="32" r="4" fill="#B7D83B"/>
+            <text x="46" y="36" fill="#F2F4EF" font-family="ui-monospace, monospace" font-size="11">YOLOv8n + BYTETRACK</text>
+            <text x="415" y="36" fill="#B7D83B" font-family="ui-monospace, monospace" font-size="11">NORMAL · 0.0%</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Concise Technology Overview (Revealed / Scrolled on Explore Technology) -->
+      <div class="container tech-section" id="tech-overview">
+        <div class="section-head">
+          <h2>System Architecture</h2>
+          <p>Lightweight local inference paired with multi-frame kinematic validation.</p>
+        </div>
+        <div class="tech-grid">
+          <article class="tech-item">
+            <span class="tech-index">01</span>
+            <h3>Lightweight Object Detection</h3>
+            <p>YOLOv8n runs locally on CUDA or CPU at 640px (with 480px and 384px performance modes) to classify cars, motorcycles, buses, trucks, bicycles, and pedestrians.</p>
+          </article>
+          <article class="tech-item">
+            <span class="tech-index">02</span>
+            <h3>ByteTrack Motion Kinematics</h3>
+            <p>Assigns persistent tracking IDs across frames to compute smoothed velocity, closing vectors, deceleration shockwaves, and trajectory deflection angles.</p>
+          </article>
+          <article class="tech-item">
+            <span class="tech-index">03</span>
+            <h3>4-Tier Temporal Validation</h3>
+            <p>Separates vehicle overlap from genuine collisions by requiring sustained multi-frame kinematic evidence before confirming an accident and saving snapshots.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         VIEW 2: LIVE MONITORING DASHBOARD
+         ================================================================ -->
+    <section id="view-monitoring" class="view-section" aria-label="Live monitoring dashboard">
+      <div class="container dashboard-container">
+        <!-- Error & Alert Status Strip -->
+        <div class="status-banner is-error" id="error-banner" role="alert" hidden>
+          <span class="banner-label">System Notice</span>
+          <span id="error-banner-text"></span>
+        </div>
+
+        <div class="status-banner is-hidden" id="accident-banner" role="alert" aria-live="assertive">
+          <div class="banner-main">
+            <span class="banner-tag" id="banner-tag">ALERT</span>
+            <div>
+              <strong id="banner-title">Monitoring Active</strong>
+              <p id="banner-reason" class="banner-sub"></p>
+            </div>
+          </div>
+          <div class="banner-score">
+            <span class="meta-label">Risk</span>
+            <strong id="banner-risk" class="tabular">0%</strong>
+          </div>
+        </div>
+
+        <!-- Primary Workspace Grid -->
+        <div class="workspace-grid">
+          <!-- LEFT: Live Monitoring Feed & Source Controls -->
+          <div class="monitor-column">
+            <div class="surface monitor-card">
+              <div class="monitor-bar">
+                <div class="monitor-title-wrap">
+                  <span class="live-indicator" id="monitor-live-dot" aria-hidden="true"></span>
+                  <span class="monitor-title" id="active-source-title">Source: Sample Accident</span>
+                </div>
+                <span class="monitor-meta tabular" id="monitor-res-meta">640 px · YOLOv8n</span>
+              </div>
+
+              <div class="video-frame">
+                <img id="video-stream" src="/video_feed" alt="Live vehicle detection and tracking video feed" class="video-img">
+              </div>
+
+              <div class="controls-bar">
+                <div class="source-pills" role="group" aria-label="Video input source">
+                  <button type="button" class="pill-btn" id="src-webcam">Live Webcam</button>
+                  <button type="button" class="pill-btn" id="src-upload-trigger">Upload Video</button>
+                  <input type="file" id="video-file-input" accept=".mp4,.avi,.mov,.mkv,.webm" hidden>
+                  <button type="button" class="pill-btn" id="src-sample-normal">Sample Traffic</button>
+                  <button type="button" class="pill-btn is-active" id="src-sample-accident">Sample Accident</button>
+                </div>
+
+                <div class="playback-actions">
+                  <button type="button" class="btn btn-primary btn-sm" id="btn-start">Start Detection</button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-stop">Stop</button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-snapshot" title="Capture current frame">Snapshot</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Tracked Road Users Table -->
+            <div class="surface panel-card">
+              <div class="panel-head">
+                <div>
+                  <h2>Active Tracked Road Users</h2>
+                  <p class="panel-sub">Persistent ByteTrack IDs, class labels, and motion kinematics</p>
+                </div>
+                <span class="count-chip tabular" id="active-track-count">0 active</span>
+              </div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">ID</th>
+                      <th scope="col">Class</th>
+                      <th scope="col">Conf</th>
+                      <th scope="col">Speed</th>
+                      <th scope="col">Heading</th>
+                      <th scope="col">Motion</th>
+                    </tr>
+                  </thead>
+                  <tbody id="telemetry-tbody">
+                    <tr class="empty-row"><td colspan="6">Start detection to view live tracked road users.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Accident Monitoring, Vehicle Analytics & Engine Controls -->
+          <aside class="telemetry-column" aria-label="Analytics and controls">
+            <!-- B & C: Accident Monitoring -->
+            <section class="surface panel-card" id="metric-risk-card">
+              <div class="panel-head">
+                <h2>Accident Monitoring</h2>
+                <span class="tier-badge tier-normal" id="val-risk-badge">NORMAL_TRAFFIC</span>
+              </div>
+
+              <div class="risk-readout">
+                <div class="risk-value-row">
+                  <span class="risk-number tabular" id="val-risk-score">0.0%</span>
+                  <span class="risk-sub" id="val-risk-subtext">Normal Traffic Flow</span>
+                </div>
+                <div class="progress-track" aria-hidden="true">
+                  <div class="progress-fill" id="risk-gauge-bar" style="width: 0%;"></div>
+                </div>
+                <div class="risk-meta-row">
+                  <span>Temporal Validation</span>
+                  <span class="tabular" id="val-temporal-status">0 / 3 frames</span>
+                </div>
+              </div>
+
+              <div class="latest-incident-box" id="latest-incident-box">
+                <div class="latest-incident-head">
+                  <span class="meta-label">Latest Incident</span>
+                  <span class="tabular meta-label" id="latest-incident-time">None</span>
+                </div>
+                <p id="latest-incident-summary" class="latest-incident-text">No collision incidents recorded.</p>
+                <button type="button" class="btn-link" id="btn-view-latest-incident" hidden>Inspect Snapshot</button>
+              </div>
+            </section>
+
+            <!-- B: Vehicle Analytics -->
+            <section class="surface panel-card">
+              <div class="panel-head">
+                <h2>Vehicle Analytics</h2>
+                <span class="meta-label" id="device-name">Detecting...</span>
+              </div>
+
+              <div class="metrics-grid">
+                <div class="metric-cell">
+                  <span class="metric-label">Active Vehicles</span>
+                  <strong class="metric-val tabular" id="val-active-vehicles">0</strong>
+                </div>
+                <div class="metric-cell">
+                  <span class="metric-label">Total Detections</span>
+                  <strong class="metric-val tabular" id="val-total-vehicles">0</strong>
+                </div>
+                <div class="metric-cell">
+                  <span class="metric-label">Inference FPS</span>
+                  <strong class="metric-val accent tabular" id="val-fps">0.0</strong>
+                </div>
+                <div class="metric-cell">
+                  <span class="metric-label">Latency</span>
+                  <strong class="metric-val tabular" id="val-latency">0.0 ms</strong>
+                </div>
+              </div>
+
+              <div class="class-breakdown">
+                <div class="breakdown-head">
+                  <span class="meta-label">Vehicle Classification</span>
+                  <span class="meta-label" id="vram-display"></span>
+                </div>
+                <div class="class-chips" id="class-breakdown-chips">
+                  <span class="class-chip">No active detections</span>
+                </div>
+                <p class="model-classes-note" id="supported-classes-note">
+                  Model classes: car, motorcycle, bus, truck, bicycle, person (custom weights ready for scooter &amp; three-wheeler).
+                </p>
+              </div>
+            </section>
+
+            <!-- Engine & Detection Configuration -->
+            <section class="surface panel-card">
+              <details class="settings-details" open>
+                <summary class="settings-summary">
+                  <span>Detection &amp; Engine Settings</span>
+                  <span class="meta-label">Configure</span>
+                </summary>
+
+                <div class="settings-body">
+                  <div class="field-row">
+                    <div class="field">
+                      <label for="model-selector">Detection Model</label>
+                      <select id="model-selector" class="select-input">
+                        <option value="yolov8n.pt" selected>YOLOv8n (Primary)</option>
+                        <option value="yolo26n.pt">YOLO26n (Alternative)</option>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label for="imgsz-selector">Input Resolution</label>
+                      <select id="imgsz-selector" class="select-input">
+                        <option value="640" selected>640 px (Default)</option>
+                        <option value="480">480 px (Fast)</option>
+                        <option value="384">384 px (Performance)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="slider-field">
+                    <div class="slider-head">
+                      <label for="conf-slider">Detection Confidence</label>
+                      <span class="tabular" id="conf-label">0.25</span>
+                    </div>
+                    <input type="range" id="conf-slider" min="0.15" max="0.75" value="0.25" step="0.05" class="range-input">
+                  </div>
+
+                  <div class="slider-field">
+                    <div class="slider-head">
+                      <label for="sensitivity-slider">Accident Risk Threshold</label>
+                      <span class="tabular" id="sensitivity-label">55%</span>
+                    </div>
+                    <input type="range" id="sensitivity-slider" min="25" max="90" value="55" step="1" class="range-input">
+                  </div>
+
+                  <div class="toggle-row">
+                    <label for="audio-alarm-toggle">Audio Alert Chime</label>
+                    <input type="checkbox" id="audio-alarm-toggle" class="checkbox-input">
+                  </div>
+
+                  <div class="bench-actions">
+                    <button type="button" class="btn btn-secondary btn-sm btn-full" id="btn-run-benchmark">
+                      Run Inference Benchmark
+                    </button>
+                    <div id="benchmark-results" class="benchmark-box" hidden></div>
+                  </div>
+                </div>
+              </details>
+            </section>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         VIEW 3: INCIDENT MANAGEMENT
+         ================================================================ -->
+    <section id="view-incidents" class="view-section" aria-label="Incident management">
+      <div class="container">
+        <div class="surface panel-card">
+          <div class="panel-head incidents-head">
+            <div>
+              <h2>Incident History &amp; Exports</h2>
+              <p class="panel-sub">Recorded multi-frame collision events, snapshots, and structured reports.</p>
+            </div>
+            <div class="incident-actions">
+              <span class="count-chip tabular" id="val-accidents-count">0 events</span>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-export-json">Export JSON</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-export-csv">Export CSV</button>
+              <button type="button" class="btn btn-danger btn-sm" id="btn-clear-history">Clear History</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Timestamp</th>
+                  <th scope="col">Snapshot</th>
+                  <th scope="col">Classification</th>
+                  <th scope="col">Risk Score</th>
+                  <th scope="col">Vehicles</th>
+                  <th scope="col">Physical Cause</th>
+                </tr>
+              </thead>
+              <tbody id="history-tbody">
+                <tr class="empty-row"><td colspan="7">No incidents recorded yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span>AURA-VISION · Local Edge Road Safety Platform</span>
+      <span>YOLOv8n · ByteTrack · 4-Tier Temporal Analysis</span>
+    </div>
+  </footer>
+
+  <!-- Native Accessible Snapshot Dialog -->
+  <dialog id="snapshot-dialog" class="snapshot-dialog" aria-labelledby="modal-title">
+    <div class="dialog-header">
+      <h3 id="modal-title">Incident Snapshot</h3>
+      <button type="button" class="dialog-close" id="modal-close-btn" aria-label="Close snapshot preview">&times;</button>
+    </div>
+    <div class="dialog-body">
+      <img id="modal-image" src="" alt="Captured incident snapshot" class="dialog-img">
+      <div class="dialog-footer">
+        <p id="modal-caption" class="dialog-caption"></p>
+        <a id="modal-download-btn" href="#" download class="btn btn-primary btn-sm">Download Image</a>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

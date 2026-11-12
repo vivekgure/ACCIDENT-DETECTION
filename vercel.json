@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "node -e \"const fs=require('fs'); fs.rmSync('public_dist',{recursive:true,force:true}); fs.mkdirSync('public_dist',{recursive:true}); fs.copyFileSync('templates/index.html','public_dist/index.html'); for(const d of ['static','sample_data','accident_events']) fs.cpSync(d,'public_dist/'+d,{recursive:true});\"",
+  "outputDirectory": "public_dist"
+}
